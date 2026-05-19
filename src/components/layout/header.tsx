@@ -12,10 +12,21 @@ const navItems = [
   ["Services", "/dtf-printing"],
 ];
 
+const adminNavItems = [
+  ["Dashboard", "/admin"],
+  ["Orders", "/admin/orders"],
+  ["Products", "/admin/products"],
+  ["Uploads", "/admin/uploads"],
+  ["Customers", "/admin/customers"],
+  ["Analytics", "/admin/analytics"],
+];
+
 export function Header({ user }: { user: CurrentUser | null }) {
   const [open, setOpen] = useState(false);
   const { itemCount } = useCart();
   const accountLabel = user?.name?.split(" ")[0] ?? "Account";
+  const userInitial = user?.name?.charAt(0).toUpperCase() ?? "A";
+  const activeNavItems = user?.role === "admin" ? adminNavItems : navItems;
 
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-background/90 shadow-[0_12px_40px_rgba(17,17,17,0.05)] backdrop-blur-xl">
@@ -47,11 +58,15 @@ export function Header({ user }: { user: CurrentUser | null }) {
         </Link>
 
         <nav className="hidden items-center rounded-full border border-line bg-white px-2 py-2 text-sm font-bold shadow-sm lg:flex">
-          {navItems.map(([label, href]) => (
+          {activeNavItems.map(([label, href]) => (
             <Link
               key={href}
               href={href}
-              className="rounded-full px-4 py-2 transition hover:bg-background hover:text-accent"
+              className={`rounded-full px-4 py-2 transition hover:bg-background hover:text-accent ${
+                user?.role === "admin" && href === "/admin"
+                  ? "bg-ink text-white hover:bg-accent hover:text-white"
+                  : ""
+              }`}
             >
               {label}
             </Link>
@@ -61,9 +76,27 @@ export function Header({ user }: { user: CurrentUser | null }) {
         <div className="flex items-center gap-2">
           <Link
             href={user ? "/account" : "/login"}
-            className="hidden rounded-md px-3 py-2 text-sm font-black transition hover:text-accent md:inline-flex"
+            className={`hidden h-12 items-center gap-3 rounded-full border px-3 pr-4 text-sm font-black shadow-sm transition md:inline-flex ${
+              user
+                ? "border-line bg-white hover:border-accent"
+                : "border-line bg-white hover:text-accent"
+            }`}
           >
-            {accountLabel}
+            {user ? (
+              <>
+                <span className="grid h-8 w-8 place-items-center rounded-full bg-ink text-xs font-black text-white">
+                  {userInitial}
+                </span>
+                <span className="grid leading-tight">
+                  <span>{accountLabel}</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted">
+                    {user.role}
+                  </span>
+                </span>
+              </>
+            ) : (
+              "Account"
+            )}
           </Link>
           <Link
             href="/cart"
@@ -86,12 +119,16 @@ export function Header({ user }: { user: CurrentUser | null }) {
       </div>
       {open ? (
         <nav className="container-shell grid gap-2 border-t border-line py-4 text-sm font-black lg:hidden">
-          {navItems.map(([label, href]) => (
+          {activeNavItems.map(([label, href]) => (
             <Link
               key={href}
               href={href}
               onClick={() => setOpen(false)}
-              className="rounded-md bg-white px-4 py-3"
+              className={`rounded-md px-4 py-3 ${
+                user?.role === "admin" && href === "/admin"
+                  ? "bg-ink text-white"
+                  : "bg-white"
+              }`}
             >
               {label}
             </Link>
@@ -99,9 +136,23 @@ export function Header({ user }: { user: CurrentUser | null }) {
           <Link
             href={user ? "/account" : "/login"}
             onClick={() => setOpen(false)}
-            className="rounded-md bg-white px-4 py-3"
+            className="flex items-center gap-3 rounded-md bg-white px-4 py-3"
           >
-            {user ? accountLabel : "Login"}
+            {user ? (
+              <>
+                <span className="grid h-8 w-8 place-items-center rounded-full bg-ink text-xs font-black text-white">
+                  {userInitial}
+                </span>
+                <span>
+                  <span className="block">{accountLabel}</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.16em] text-muted">
+                    {user.role}
+                  </span>
+                </span>
+              </>
+            ) : (
+              "Login"
+            )}
           </Link>
         </nav>
       ) : null}
