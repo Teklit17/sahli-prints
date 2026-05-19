@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { ObjectId } from "mongodb";
 import { getCurrentUser } from "@/src/lib/auth/session";
 import { getDatabase } from "@/src/lib/mongodb";
 import type { PrintType, ProductCategory } from "@/src/types";
@@ -168,4 +169,89 @@ export async function POST(request: Request) {
     },
     { status: 201 },
   );
+}
+
+export async function PATCH(request: Request) {
+  const guard = await requireAdmin();
+  if (guard.response) return guard.response;
+
+  const payload = (await request.json()) as ProductPayload & { id?: string };
+
+  if (!payload.id || !ObjectId.isValid(payload.id)) {
+    return NextResponse.json({ error: "Valid product id is required." }, { status: 400 });
+  }
+
+  const name = payload.name?.trim() ?? "";
+  const description = payload.description?.trim() ?? "";
+  const price = Number(payload.price);
+  const category = payload.category;
+  const image = payload.image?.trim() ?? "";
+  const selectedPrintTypes = (payload.printTypes ?? []).filter((item) =>
+    printTypes.includes(item),
+  );
+  const sizes = (payload.sizes ?? []).map((item) => item.trim()).filter(Boolean);
+  const colors = (payload.colors ?? []).map((item) => item.trim()).filter(Boolean);
+
+  if (!name || !description || !image) {
+    return NextResponse.json(
+      { error: "Name, description, and image URL are required." },
+      { status: 400 },
+    );
+  }
+
+  if (!category || !categories.includes(category)) {
+    return NextResponse.json({ error: "Valid category is required." }, { status: 400 });
+  }
+
+  if (!Number.isFinite(price) || price <= 0) {
+    return NextResponse.json({ error: "Valid price is required." }, { status: 400 });
+  }
+
+  if (!selectedPrintTypes.length) {
+    return NextResponse.json(
+      { error: "Choose at least one print type." },
+      { status: 400 },
+    );
+  }
+
+  const db = await getDatabase();
+  await db.collection("products").updateOne(
+    { _id: new ObjectId(payload.id) },
+    {
+      $set: {
+        name,
+        description,
+        price,
+        category,
+        printTypes: selectedPrintTypes,
+        sizes: sizes.length ? sizes : ["Standard"],
+        colors: colors.length ? colors : ["Default"],
+        image,
+        inventory: Number(payload.inventory ?? 0),
+        active: payload.active !== false,
+        featured: Boolean(payload.featured),
+        updatedBy: guard.user?.id,
+        updatedAt: new Date(),
+      },
+    },
+  );
+
+  return NextResponse.json({ ok: true });
+}
+
+export async function DELETE(request: Request) {
+  const guard = await requireAdmin();
+  if (guard.response) return guard.response;
+
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get("id");
+
+  if (!id || !ObjectId.isValid(id)) {
+    return NextResponse.json({ error: "Valid product id is required." }, { status: 400 });
+  }
+
+  const db = await getDatabase();
+  await db.collection("products").deleteOne({ _id: new ObjectId(id) });
+
+  return NextResponse.json({ ok: true });
 }

@@ -1,24 +1,51 @@
 "use client";
 
+import {
+  Boxes,
+  ChartNoAxesColumnIncreasing,
+  GalleryHorizontalEnd,
+  LayoutDashboard,
+  Menu,
+  PackageCheck,
+  Palette,
+  ReceiptText,
+  ShoppingBag,
+  ShoppingCart,
+  Sparkles,
+  UploadCloud,
+  User,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "@/src/components/cart/cart-provider";
 import type { CurrentUser } from "@/src/types/auth";
 
-const navItems = [
-  ["Shop", "/shop"],
-  ["Customize", "/customize"],
-  ["Gallery", "/gallery"],
-  ["Services", "/dtf-printing"],
+type NavItem = {
+  label: string;
+  href: string;
+  Icon: LucideIcon;
+};
+
+const navItems: NavItem[] = [
+  { label: "Shop", href: "/shop", Icon: ShoppingBag },
+  { label: "Customize", href: "/customize", Icon: Palette },
+  { label: "Gallery", href: "/gallery", Icon: GalleryHorizontalEnd },
+  { label: "Services", href: "/dtf-printing", Icon: Sparkles },
 ];
 
-const adminNavItems = [
-  ["Dashboard", "/admin"],
-  ["Orders", "/admin/orders"],
-  ["Products", "/admin/products"],
-  ["Uploads", "/admin/uploads"],
-  ["Customers", "/admin/customers"],
-  ["Analytics", "/admin/analytics"],
+const adminNavItems: NavItem[] = [
+  { label: "Dashboard", href: "/admin", Icon: LayoutDashboard },
+  { label: "Orders", href: "/admin/orders", Icon: ReceiptText },
+  { label: "Products", href: "/admin/products", Icon: Boxes },
+  { label: "Uploads", href: "/admin/uploads", Icon: UploadCloud },
+  { label: "Customers", href: "/admin/customers", Icon: Users },
+  {
+    label: "Analytics",
+    href: "/admin/analytics",
+    Icon: ChartNoAxesColumnIncreasing,
+  },
 ];
 
 export function Header({ user }: { user: CurrentUser | null }) {
@@ -35,8 +62,9 @@ export function Header({ user }: { user: CurrentUser | null }) {
           <p>Custom apparel, drinkware, totes, and gifts</p>
           <Link
             href="/customize"
-            className="text-[#f5c0a9] transition hover:text-white"
+            className="inline-flex items-center gap-2 text-[#f5c0a9] transition hover:text-white"
           >
+            <PackageCheck aria-hidden="true" className="h-3.5 w-3.5" />
             Start an order
           </Link>
         </div>
@@ -58,16 +86,17 @@ export function Header({ user }: { user: CurrentUser | null }) {
         </Link>
 
         <nav className="hidden items-center rounded-full border border-line bg-white px-2 py-2 text-sm font-bold shadow-sm lg:flex">
-          {activeNavItems.map(([label, href]) => (
+          {activeNavItems.map(({ label, href, Icon }) => (
             <Link
               key={href}
               href={href}
-              className={`rounded-full px-4 py-2 transition hover:bg-background hover:text-accent ${
+              className={`inline-flex items-center gap-2 rounded-full px-4 py-2 transition hover:bg-background hover:text-accent ${
                 user?.role === "admin" && href === "/admin"
                   ? "bg-ink text-white hover:bg-accent hover:text-white"
                   : ""
               }`}
             >
+              <Icon aria-hidden="true" className="h-4 w-4" />
               {label}
             </Link>
           ))}
@@ -85,7 +114,7 @@ export function Header({ user }: { user: CurrentUser | null }) {
             {user ? (
               <>
                 <span className="grid h-8 w-8 place-items-center rounded-full bg-ink text-xs font-black text-white">
-                  {userInitial}
+                  {user ? userInitial : <User aria-hidden="true" className="h-4 w-4" />}
                 </span>
                 <span className="grid leading-tight">
                   <span>{accountLabel}</span>
@@ -100,10 +129,12 @@ export function Header({ user }: { user: CurrentUser | null }) {
           </Link>
           <Link
             href="/cart"
-            className="relative inline-flex h-11 items-center justify-center rounded-md bg-ink px-4 text-sm font-black text-white transition hover:bg-accent"
+            className="relative inline-flex h-11 w-12 items-center justify-center rounded-md bg-ink text-sm font-black text-white transition hover:bg-accent"
+            aria-label={`Cart with ${itemCount} items`}
           >
-            Cart
-            <span className="ml-2 grid min-w-5 place-items-center rounded-full bg-white px-1.5 py-0.5 text-xs font-black text-ink">
+            <ShoppingCart aria-hidden="true" className="h-4 w-4" />
+            <span className="sr-only">Cart</span>
+            <span className="absolute -right-2 -top-2 grid min-w-5 place-items-center rounded-full bg-accent px-1.5 py-0.5 text-xs font-black text-white ring-2 ring-background">
               {itemCount}
             </span>
           </Link>
@@ -113,23 +144,25 @@ export function Header({ user }: { user: CurrentUser | null }) {
             onClick={() => setOpen((value) => !value)}
             aria-expanded={open}
           >
-            Menu
+            <Menu aria-hidden="true" className="h-4 w-4" />
+            <span className="ml-2">Menu</span>
           </button>
         </div>
       </div>
       {open ? (
         <nav className="container-shell grid gap-2 border-t border-line py-4 text-sm font-black lg:hidden">
-          {activeNavItems.map(([label, href]) => (
+          {activeNavItems.map(({ label, href, Icon }) => (
             <Link
               key={href}
               href={href}
               onClick={() => setOpen(false)}
-              className={`rounded-md px-4 py-3 ${
+              className={`flex items-center gap-3 rounded-md px-4 py-3 ${
                 user?.role === "admin" && href === "/admin"
                   ? "bg-ink text-white"
                   : "bg-white"
               }`}
             >
+              <Icon aria-hidden="true" className="h-4 w-4" />
               {label}
             </Link>
           ))}
@@ -151,7 +184,10 @@ export function Header({ user }: { user: CurrentUser | null }) {
                 </span>
               </>
             ) : (
-              "Login"
+              <>
+                <User aria-hidden="true" className="h-4 w-4" />
+                Login
+              </>
             )}
           </Link>
         </nav>
